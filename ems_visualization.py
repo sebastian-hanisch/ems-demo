@@ -42,6 +42,11 @@ def map_figure(demand_positions, demand_weights, candidate_sites, chosen_indices
         yaxis=dict(range=[0, MAP_SIZE], title=None, showgrid=False, scaleanchor="x"),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
     )
+    # fixedrange auf beiden Achsen: verhindert Pinch-Zoom/Drag-Pan im Chart,
+    # damit auf Touch-Geräten stattdessen die Seite normal gescrollt wird
+    # (Hover-Tooltips bleiben davon unberührt).
+    fig.update_xaxes(fixedrange=True)
+    fig.update_yaxes(fixedrange=True)
     return fig
 
 
@@ -53,6 +58,8 @@ def workload_figure(workload, title):
         title=title, yaxis_title="Auslastung (%)", yaxis_range=[0, 100],
         height=280, margin=dict(l=10, r=10, t=40, b=10),
     )
+    fig.update_xaxes(fixedrange=True)
+    fig.update_yaxes(fixedrange=True)
     return fig
 
 
@@ -66,6 +73,8 @@ def convergence_figure(history, title):
         title=title, xaxis_title="Tausch-Iteration", yaxis_title="Zielgröße (gewichtete Distanz + Verlust-Strafe)",
         height=260, margin=dict(l=10, r=10, t=40, b=10),
     )
+    fig.update_xaxes(fixedrange=True)
+    fig.update_yaxes(fixedrange=True)
     return fig
 
 
@@ -89,4 +98,6 @@ def multi_convergence_figure(series, title):
         height=320, margin=dict(l=10, r=10, t=40, b=10),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
     )
+    fig.update_xaxes(fixedrange=True)
+    fig.update_yaxes(fixedrange=True)
     return fig
