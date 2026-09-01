@@ -20,3 +20,23 @@ DEFAULT_TIME_THRESHOLD = 4.0  # Entfernungs-/Zeit-Schwelle für "Abdeckung"
 MAX_SERVERS = 8
 
 LOCAL_SEARCH_MAX_ITER = 30
+
+# GA/ACO-Parameter: an Blank (Dissertation, Kapitel 6.3) angelehnt - dort
+# identifiziert als die im eigenen Metaheuristik-Vergleich am besten
+# funktionierende ACO-Parameterkombination (Supd=6, Verdunstung 0,1,
+# Populationsgroesse 20). Fuer den GA verwendet diese Demo dieselbe
+# Populationsgroesse, um beide Verfahren mit vergleichbarem "Budget" an
+# HQM-Auswertungen je Generation/Iteration gegenueberzustellen.
+GA_POPULATION_SIZE = 20
+GA_MAX_GENERATIONS = 30
+GA_CROSSOVER_PROB = 0.8
+GA_MUTATION_PROB = 0.15
+GA_NO_IMPROVE_PATIENCE = 8
+
+ACO_N_ANTS = 20
+ACO_S_UPD = 6
+ACO_EVAPORATION = 0.1
+ACO_MAX_ITERATIONS = 30
+ACO_NO_IMPROVE_PATIENCE = 8
+
+METAHEURISTIC_SEED_OFFSET = 51971  # abweichender Seed-Offset fuer GA/ACO-Zufallszahlen

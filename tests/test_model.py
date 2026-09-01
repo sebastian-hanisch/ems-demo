@@ -23,6 +23,7 @@ sys.path.insert(0, os.path.abspath(APP_DIR))
 from ems_evaluation import hqm_summary, naive_self_assessed_art
 from ems_hqm import build_preference_lists, erlang_b, solve_hqm
 from ems_location import greedy_mclp, hqm_objective, local_search
+from ems_metaheuristics import ant_colony_optimization, genetic_algorithm
 from ems_model import generate_candidate_sites, generate_demand_points, scale_demand_to_utilization
 from ems_pdf_export import generate_location_plan_pdf
 
@@ -176,6 +177,102 @@ class TestLocationStrategies:
         assert sorted(final) == sorted(brute_force_best[1])
         assert history[-1] == pytest.approx(brute_force_best[0])
         assert history[-1] < history[0]  # tatsächlich eine Verbesserung ggü. dem schlechten Start
+
+
+# ==========================================================================
+# Metaheuristiken (Genetischer Algorithmus, Ant-Colony-Optimization)
+# ==========================================================================
+
+class TestMetaheuristics:
+    def test_ga_returns_requested_count_and_no_duplicates(self):
+        rng = np.random.default_rng(10)
+        candidates = rng.uniform(0, 10, size=(10, 2))
+        demand_pos = rng.uniform(0, 10, size=(8, 2))
+        weights = rng.uniform(0.5, 1.5, size=8)
+        chosen, _, _ = genetic_algorithm(candidates, demand_pos, weights, mu=1.0, n_servers=4, seed=1)
+        assert len(chosen) == 4
+        assert len(set(chosen)) == 4
+
+    def test_aco_returns_requested_count_and_no_duplicates(self):
+        rng = np.random.default_rng(11)
+        candidates = rng.uniform(0, 10, size=(10, 2))
+        demand_pos = rng.uniform(0, 10, size=(8, 2))
+        weights = rng.uniform(0.5, 1.5, size=8)
+        chosen, _, _ = ant_colony_optimization(candidates, demand_pos, weights, mu=1.0, n_servers=4, seed=1)
+        assert len(chosen) == 4
+        assert len(set(chosen)) == 4
+
+    def test_ga_history_never_worsens(self):
+        rng = np.random.default_rng(12)
+        candidates = rng.uniform(0, 10, size=(10, 2))
+        demand_pos = rng.uniform(0, 10, size=(8, 2))
+        weights = rng.uniform(0.5, 1.5, size=8)
+        _, history, _ = genetic_algorithm(candidates, demand_pos, weights, mu=1.0, n_servers=4, seed=2)
+        assert all(history[i + 1] <= history[i] + 1e-9 for i in range(len(history) - 1)), \
+            "Elitistische Nachfolge: das bislang beste Ergebnis darf sich nie verschlechtern"
+
+    def test_aco_history_never_worsens(self):
+        rng = np.random.default_rng(13)
+        candidates = rng.uniform(0, 10, size=(10, 2))
+        demand_pos = rng.uniform(0, 10, size=(8, 2))
+        weights = rng.uniform(0.5, 1.5, size=8)
+        _, history, _ = ant_colony_optimization(candidates, demand_pos, weights, mu=1.0, n_servers=4, seed=2)
+        assert all(history[i + 1] <= history[i] + 1e-9 for i in range(len(history) - 1)), \
+            "Das bislang beste Ergebnis darf sich nie verschlechtern"
+
+    def test_ga_finds_the_true_optimum_on_a_small_enumerable_case(self):
+        """Dieselbe scharfe Brute-Force-Referenz wie fuer die lokale Suche
+        (siehe test_local_search_finds_the_true_optimum_on_a_small_enumerable_case) -
+        bei nur C(6,2)=15 Kombinationen sollte ein GA mit Populationsgroesse 20
+        das global beste Ergebnis zuverlaessig finden."""
+        import itertools
+
+        candidates = np.array([[0, 0], [0.5, 0], [1, 0], [5, 5], [9, 9], [9, 0]], dtype=float)
+        demand_pos = np.array([[5, 5], [5.2, 5.1], [4.8, 4.9], [9, 9]], dtype=float)
+        weights = np.array([1.0, 1.0, 1.0, 1.0])
+
+        brute_force_best = min(
+            hqm_objective(list(combo), candidates, demand_pos, weights, 1.0)
+            for combo in itertools.combinations(range(len(candidates)), 2)
+        )
+
+        _, history, _ = genetic_algorithm(candidates, demand_pos, weights, mu=1.0, n_servers=2, seed=3)
+        assert history[-1] == pytest.approx(brute_force_best)
+
+    def test_aco_finds_the_true_optimum_on_a_small_enumerable_case(self):
+        import itertools
+
+        candidates = np.array([[0, 0], [0.5, 0], [1, 0], [5, 5], [9, 9], [9, 0]], dtype=float)
+        demand_pos = np.array([[5, 5], [5.2, 5.1], [4.8, 4.9], [9, 9]], dtype=float)
+        weights = np.array([1.0, 1.0, 1.0, 1.0])
+
+        brute_force_best = min(
+            hqm_objective(list(combo), candidates, demand_pos, weights, 1.0)
+            for combo in itertools.combinations(range(len(candidates)), 2)
+        )
+
+        _, history, _ = ant_colony_optimization(candidates, demand_pos, weights, mu=1.0, n_servers=2, seed=3)
+        assert history[-1] == pytest.approx(brute_force_best)
+
+    def test_ga_deterministic_with_fixed_seed(self):
+        rng = np.random.default_rng(14)
+        candidates = rng.uniform(0, 10, size=(10, 2))
+        demand_pos = rng.uniform(0, 10, size=(8, 2))
+        weights = rng.uniform(0.5, 1.5, size=8)
+        chosen1, hist1, _ = genetic_algorithm(candidates, demand_pos, weights, mu=1.0, n_servers=4, seed=99)
+        chosen2, hist2, _ = genetic_algorithm(candidates, demand_pos, weights, mu=1.0, n_servers=4, seed=99)
+        assert sorted(chosen1) == sorted(chosen2)
+        assert hist1 == hist2
+
+    def test_aco_deterministic_with_fixed_seed(self):
+        rng = np.random.default_rng(15)
+        candidates = rng.uniform(0, 10, size=(10, 2))
+        demand_pos = rng.uniform(0, 10, size=(8, 2))
+        weights = rng.uniform(0.5, 1.5, size=8)
+        chosen1, hist1, _ = ant_colony_optimization(candidates, demand_pos, weights, mu=1.0, n_servers=4, seed=99)
+        chosen2, hist2, _ = ant_colony_optimization(candidates, demand_pos, weights, mu=1.0, n_servers=4, seed=99)
+        assert sorted(chosen1) == sorted(chosen2)
+        assert hist1 == hist2
 
 
 # ==========================================================================

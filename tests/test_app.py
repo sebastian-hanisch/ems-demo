@@ -100,6 +100,14 @@ def test_pdf_download_button_present():
     assert any("PDF" in b.label for b in at.download_button)
 
 
+def test_metaheuristic_comparison_button_runs_without_crash():
+    at = fresh_app()
+    btn = [b for b in at.button if "Vergleich berechnen" in b.label][0]
+    btn.click().run(timeout=TIMEOUT)
+    assert_ok(at)
+    assert any("Ant-Colony-Optimization" in m.label for m in at.metric)
+
+
 def test_no_feedback_ui_present():
     """Regressionsschutz: diese Demo hat bewusst KEINEN Feedback-Mechanismus
     (siehe Entscheidung für das gesamte Portfolio - Streamlit Community

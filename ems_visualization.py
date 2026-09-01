@@ -67,3 +67,26 @@ def convergence_figure(history, title):
         height=260, margin=dict(l=10, r=10, t=40, b=10),
     )
     return fig
+
+
+def multi_convergence_figure(series, title):
+    """series: dict {Verfahrensname: history-Liste} - mehrere Konvergenz-
+    verlaeufe im selben Diagramm. Die x-Achse zaehlt je Verfahren eigene
+    Iterationen/Generationen und ist zwischen den Verfahren nicht direkt
+    vergleichbar (ein GA-"Generationsschritt" wertet z.B. deutlich mehr
+    Konfigurationen aus als ein Tausch-Schritt der lokalen Suche) - die
+    Rechenzeit-Tabelle daneben liefert den fairen Vergleich."""
+    fig = go.Figure()
+    colors = ["#14233B", "#3E8E86", "#D68A2E"]
+    for (name, history), color in zip(series.items(), colors):
+        fig.add_trace(go.Scatter(
+            x=list(range(len(history))), y=history, mode="lines+markers",
+            name=name, line=dict(color=color, width=2),
+        ))
+    fig.update_layout(
+        title=title, xaxis_title="Iteration / Generation",
+        yaxis_title="Zielgröße (gewichtete Distanz + Verlust-Strafe)",
+        height=320, margin=dict(l=10, r=10, t=40, b=10),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+    )
+    return fig

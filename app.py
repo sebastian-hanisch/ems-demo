@@ -6,10 +6,12 @@ Angeregt durch die Dissertation von BLANK, F. (Julius-Maximilians-Universitaet
 Wuerzburg, 2021): "The use of the Hypercube Queueing Model for the location
 optimization decision of Emergency Medical Service systems". Diese Demo
 implementiert den Kern des dort behandelten Modells (LARSON 1974) sowie einen
-vereinfachten Ausschnitt der dort entwickelten Standortoptimierung - bewusst
-ohne die volle Modelltiefe der Dissertation (Goal Programming, robuste
-Optimierung ueber mehrere Szenarien, Ant-Colony-Optimization, Caching-
-Strategie), um das Kernprinzip greifbar zu machen.
+vereinfachten Ausschnitt der dort entwickelten Standortoptimierung - inklusive
+der beiden dort verglichenen Metaheuristiken (Genetischer Algorithmus und
+Ant-Colony-Optimization, siehe ems_metaheuristics.py) - bewusst ohne die volle
+Modelltiefe der Dissertation (Goal Programming, robuste Optimierung ueber
+mehrere Szenarien, Dynamic Caching Strategy), um das Kernprinzip greifbar zu
+machen.
 
 Kernidee: Ein Fahrzeug (Server) ist nicht immer verfuegbar, wenn ein Notruf
 eingeht - es koennte gerade im Einsatz sein. Das Hypercube Queueing Model
@@ -33,10 +35,11 @@ Lauffaehig mit: streamlit run app.py
 import numpy as np
 import streamlit as st
 
-from ems_constants import DEFAULT_TIME_THRESHOLD
+from ems_constants import DEFAULT_TIME_THRESHOLD, METAHEURISTIC_SEED_OFFSET
 from ems_evaluation import hqm_summary, naive_self_assessed_art
 from ems_hqm import solve_hqm
 from ems_location import greedy_mclp, local_search
+from ems_metaheuristics import ant_colony_optimization, genetic_algorithm
 from ems_model import generate_candidate_sites, generate_demand_points, scale_demand_to_utilization
 from ems_pdf_export import generate_location_plan_pdf
 from ems_presets import (
@@ -47,7 +50,7 @@ from ems_presets import (
     randomize_seed,
     sync_query_params,
 )
-from ems_visualization import convergence_figure, map_figure, workload_figure
+from ems_visualization import convergence_figure, map_figure, multi_convergence_figure, workload_figure
 
 
 @st.cache_data(show_spinner="Standorte werden optimiert …")
@@ -73,6 +76,23 @@ def _compute(n_servers, n_candidates, n_demand, n_peaks, peak_conc, seed, servic
         "hqm_naive": hqm_naive,
         "hqm_optimized": hqm_optimized,
         "mu": mu,
+    }
+
+
+@st.cache_data(show_spinner="Genetischer Algorithmus und Ant-Colony-Optimization werden verglichen …")
+def _compute_metaheuristics(n_servers, n_candidates, n_demand, n_peaks, peak_conc, seed, service_time, utilization, cache_key):
+    mu = 1.0 / service_time
+    demand_positions, demand_weights_rel = generate_demand_points(n_demand, n_peaks, peak_conc, seed)
+    candidate_sites = generate_candidate_sites(n_candidates, seed, demand_positions)
+    demand_weights = scale_demand_to_utilization(demand_weights_rel, utilization, n_servers, mu)
+
+    meta_seed = int(seed) + METAHEURISTIC_SEED_OFFSET
+    ga_indices, ga_history, ga_time = genetic_algorithm(candidate_sites, demand_positions, demand_weights, mu, n_servers, meta_seed)
+    aco_indices, aco_history, aco_time = ant_colony_optimization(candidate_sites, demand_positions, demand_weights, mu, n_servers, meta_seed)
+
+    return {
+        "ga_indices": ga_indices, "ga_history": ga_history, "ga_time": ga_time,
+        "aco_indices": aco_indices, "aco_history": aco_history, "aco_time": aco_time,
     }
 
 
@@ -228,6 +248,60 @@ with st.expander("🔧 Lokale Suche: wie kam die HQM-bewusste Lösung zustande?"
         "stärksten verbessert - bis kein verbessernder Tausch mehr gefunden wird."
     )
 
+with st.expander("🧬 Metaheuristik-Vergleich: Genetischer Algorithmus vs. Ant-Colony-Optimization"):
+    st.markdown(
+        """
+Neben der lokalen Suche oben implementiert diese Demo zwei weitere Verfahren, die Blank
+(Dissertation, Kapitel 6) für dieselbe Aufgabenstellung explizit miteinander vergleicht: einen
+**genetischen Algorithmus (GA)** und **Ant-Colony-Optimization (ACO)** - beide angewandt auf
+dieselbe HQM-Zielgröße wie die lokale Suche, aber ohne deren Startpunkt (naive Lösung) zu kennen.
+Blank kommt in eigenen Experimenten zu einem klaren Ergebnis (S. 168f. der Dissertation):
+
+> *"the ACO performs better than the GA in the proposed experimental setting"* - die ACO reagiert
+> robuster auf die Parameterwahl und wird deshalb für den Rest der Arbeit als alleinige
+> Optimierungstechnik verwendet.
+
+Mit dem Button unten lässt sich das direkt am aktuellen Szenario nachvollziehen - inklusive
+Rechenzeit, denn genau die war neben der Lösungsgüte ausschlaggebend für Blanks Entscheidung.
+"""
+    )
+    run_comparison = st.button("🧬 Vergleich berechnen (kann einige Sekunden dauern)")
+    if run_comparison:
+        st.session_state["metaheuristic_cache_key"] = cache_key
+
+    if st.session_state.get("metaheuristic_cache_key") == cache_key:
+        meta = _compute_metaheuristics(n_servers, n_candidates, n_demand, n_peaks, peak_conc, int(seed), service_time, utilization, cache_key)
+
+        st.plotly_chart(
+            multi_convergence_figure(
+                {
+                    "Lokale Suche": data["history"],
+                    "Genetischer Algorithmus": meta["ga_history"],
+                    "Ant-Colony-Optimization": meta["aco_history"],
+                },
+                "Zielgröße über Iterationen/Generationen je Verfahren",
+            ),
+            use_container_width=True,
+        )
+
+        ga_obj, aco_obj, ls_obj = meta["ga_history"][-1], meta["aco_history"][-1], data["history"][-1]
+        t1, t2, t3 = st.columns(3)
+        t1.metric("Lokale Suche", f"{ls_obj:.3f}", help="Zielgröße (gewichtete Distanz + Verlust-Strafe)")
+        t2.metric("Genetischer Algorithmus", f"{ga_obj:.3f}", delta=f"{ga_obj - ls_obj:+.3f} ggü. lokaler Suche", delta_color="inverse")
+        t2.caption(f"Rechenzeit: {meta['ga_time']*1000:.0f} ms")
+        t3.metric("Ant-Colony-Optimization", f"{aco_obj:.3f}", delta=f"{aco_obj - ls_obj:+.3f} ggü. lokaler Suche", delta_color="inverse")
+        t3.caption(f"Rechenzeit: {meta['aco_time']*1000:.0f} ms")
+
+        st.caption(
+            "Die x-Achse ist zwischen den Verfahren nicht direkt vergleichbar (ein GA-Generationsschritt oder eine "
+            "ACO-Iteration wertet deutlich mehr Konfigurationen aus als ein einzelner Tausch-Schritt der lokalen "
+            "Suche) - Zielgröße und Rechenzeit oben sind der faire Vergleich. Alle drei Verfahren nutzen dieselbe "
+            "HQM-Zielgröße, GA und ACO starten aber - anders als die lokale Suche - bewusst nicht von der naiven "
+            "Lösung, sondern von zufälligen Konfigurationen."
+        )
+    else:
+        st.caption("Noch nicht berechnet - Button oben klicken.")
+
 with st.expander("Wie funktioniert diese Demo?"):
     st.markdown(
         """
@@ -255,6 +329,14 @@ Standort gegen einen besseren, sofern das die über das HQM berechnete Zielgrö�
 bis keine Verbesserung mehr gefunden wird. Ohne Strafterm für verlorene Anrufe könnte die
 Suche eine hohe Verlustwahrscheinlichkeit in Kauf nehmen, solange die noch bedienten Anrufe
 kurze Wege haben - deshalb fließt die Verlustwahrscheinlichkeit direkt in die Zielgröße ein.
+
+**Genetischer Algorithmus und Ant-Colony-Optimization:** Zwei weitere, populationsbasierte
+Metaheuristiken für dieselbe Zielgröße (siehe Expander "Metaheuristik-Vergleich" oben). Der
+GA lässt eine Population von Standort-Konfigurationen über Generationen "evolvieren"
+(fitness-proportionale Selektion, Crossover, Mutation). Die ACO lässt Standort-Konfigurationen
+schrittweise durch Pheromon-Werte je Kandidat entstehen, die nach jeder Iteration entsprechend
+der Lösungsgüte verstärkt bzw. verdunstet werden. Beide sind unabhängig von der lokalen Suche
+und kennen deren Startpunkt nicht.
 
 **Warum der Unterschied mit der Auslastung wächst:** Bei niedriger Auslastung ist fast immer
 ein Fahrzeug frei - naive und HQM-bewusste Standortwahl fallen kaum unterschiedlich aus. Bei
@@ -321,8 +403,9 @@ verbleibenden im Schnitt kurze Wege haben.
 
 **Bezug zum Code:** `ems_hqm.py` (`solve_hqm`) baut $Q$ auf und löst das Gleichungssystem.
 `ems_location.py` implementiert die naive Greedy-Wahl (`greedy_mclp`) sowie die lokale
-Suche (`local_search`, `hqm_objective`). `ems_evaluation.py` leitet die angezeigten
-Kennzahlen aus dem HQM-Ergebnis ab.
+Suche (`local_search`, `hqm_objective`). `ems_metaheuristics.py` implementiert Genetischen
+Algorithmus und Ant-Colony-Optimization auf derselben Zielgröße. `ems_evaluation.py` leitet
+die angezeigten Kennzahlen aus dem HQM-Ergebnis ab.
 """
     )
 
