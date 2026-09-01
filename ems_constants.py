@@ -39,4 +39,13 @@ ACO_EVAPORATION = 0.1
 ACO_MAX_ITERATIONS = 30
 ACO_NO_IMPROVE_PATIENCE = 8
 
+# Memetische Hybridisierung (GA/ACO + kurze lokale Suche auf dem jeweils
+# besten Individuum/der besten Ameise je Generation/Iteration): mehrere
+# Studien (u.a. eine Metaheuristik-Vergleichsstudie fuer Ambulanz-Allokation,
+# GECCO 2023) finden, dass ein memetischer Algorithmus reinen GA/ACO-Varianten
+# ueberlegen ist. max_iter bewusst klein gehalten, da dieser Schritt in jeder
+# Generation/Iteration erneut ausgefuehrt wird.
+GA_MEMETIC_POLISH_STEPS = 3
+ACO_MEMETIC_POLISH_STEPS = 3
+
 METAHEURISTIC_SEED_OFFSET = 51971  # abweichender Seed-Offset fuer GA/ACO-Zufallszahlen

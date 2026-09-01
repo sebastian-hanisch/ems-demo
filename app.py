@@ -261,8 +261,20 @@ Blank kommt in eigenen Experimenten zu einem klaren Ergebnis (S. 168f. der Disse
 > robuster auf die Parameterwahl und wird deshalb für den Rest der Arbeit als alleinige
 > Optimierungstechnik verwendet.
 
-Mit dem Button unten lässt sich das direkt am aktuellen Szenario nachvollziehen - inklusive
-Rechenzeit, denn genau die war neben der Lösungsgüte ausschlaggebend für Blanks Entscheidung.
+Blank betont dabei selbst, dass ein GA-vs-ACO-Vergleich stark vom konkreten Anwendungsfall abhängt
+- und die breitere Literatur bestätigt das: IANNONI, MORABITO UND SAYDAM (2008) kombinieren das
+Hypercube-Modell umgekehrt mit einem GA (eine von Blanks eigenen Inspirationsquellen), und für
+andere EMS-Standort-/Einsatzmodelle (z.B. BENABDOUALLAH UND BOJJI zum "Dynamic Double Standard
+Model") schneidet in direkten Vergleichen gerade der **GA besser** ab als die ACO. Es gibt also
+keinen universellen Sieger - mit dem Button unten lässt sich das eigene Szenario direkt selbst
+nachvollziehen, inklusive Rechenzeit, denn genau die war neben der Lösungsgüte ausschlaggebend für
+Blanks Entscheidung.
+
+Beide Verfahren sind hier zusätzlich **memetisch hybridisiert**: das jeweils beste Individuum
+bzw. die beste Ameise wird je Generation/Iteration mit ein paar Schritten lokaler Suche
+nachpoliert - eine Erweiterung, die weder Blank noch die oben genannten Vergleichsstudien
+verwenden, aber laut einer separaten Metaheuristik-Vergleichsstudie für Ambulanz-Allokation
+(GECCO 2023) reine populationsbasierte Verfahren übertrifft.
 """
     )
     run_comparison = st.button("🧬 Vergleich berechnen (kann einige Sekunden dauern)")
@@ -336,7 +348,11 @@ GA lässt eine Population von Standort-Konfigurationen über Generationen "evolv
 (fitness-proportionale Selektion, Crossover, Mutation). Die ACO lässt Standort-Konfigurationen
 schrittweise durch Pheromon-Werte je Kandidat entstehen, die nach jeder Iteration entsprechend
 der Lösungsgüte verstärkt bzw. verdunstet werden. Beide sind unabhängig von der lokalen Suche
-und kennen deren Startpunkt nicht.
+und kennen deren Startpunkt nicht - beide sind aber **memetisch hybridisiert**: das jeweils
+beste Individuum bzw. die beste Ameise wird je Generation/Iteration mit ein paar Schritten
+lokaler Suche nachpoliert, bevor Selektion bzw. Pheromon-Update darauf aufbauen. Mehrere Studien
+(u.a. eine Metaheuristik-Vergleichsstudie für Ambulanz-Allokation, GECCO 2023) finden, dass
+diese Hybridisierung reine populationsbasierte Verfahren übertrifft.
 
 **Warum der Unterschied mit der Auslastung wächst:** Bei niedriger Auslastung ist fast immer
 ein Fahrzeug frei - naive und HQM-bewusste Standortwahl fallen kaum unterschiedlich aus. Bei

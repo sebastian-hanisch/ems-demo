@@ -17,6 +17,15 @@ Expander "Metaheuristik-Vergleich" in app.py).
 GA-Chromosom bzw. ACO-"Ameise": eine Liste von n_servers verschiedenen
 Standort-Indizes (ein Standort je platziertem Fahrzeug) - dieselbe
 Repraesentation, die auch local_search verwendet.
+
+Beide Verfahren sind memetisch hybridisiert: das jeweils beste Individuum
+bzw. die beste Ameise wird je Generation/Iteration mit ein paar Schritten
+lokaler Suche (Wiederverwendung von local_search aus ems_location.py)
+nachpoliert, bevor Selektion bzw. Pheromon-Update darauf aufbauen. Mehrere
+Studien - u.a. eine Metaheuristik-Vergleichsstudie fuer Ambulanz-Allokation
+(GECCO 2023) sowie der allgemeine ACO-Literaturstrang "ACO + lokale Suche" -
+finden, dass diese Hybridisierung reine populationsbasierte Verfahren
+uebertrifft.
 """
 
 import time
@@ -26,16 +35,18 @@ import numpy as np
 from ems_constants import (
     ACO_EVAPORATION,
     ACO_MAX_ITERATIONS,
+    ACO_MEMETIC_POLISH_STEPS,
     ACO_N_ANTS,
     ACO_NO_IMPROVE_PATIENCE,
     ACO_S_UPD,
     GA_CROSSOVER_PROB,
     GA_MAX_GENERATIONS,
+    GA_MEMETIC_POLISH_STEPS,
     GA_MUTATION_PROB,
     GA_NO_IMPROVE_PATIENCE,
     GA_POPULATION_SIZE,
 )
-from ems_location import hqm_objective
+from ems_location import hqm_objective, local_search
 
 
 def _random_individual(rng, n_candidates, n_servers):
@@ -72,14 +83,17 @@ def genetic_algorithm(
     candidate_sites, demand_positions, demand_weights, mu, n_servers, seed,
     population_size=GA_POPULATION_SIZE, max_generations=GA_MAX_GENERATIONS,
     crossover_prob=GA_CROSSOVER_PROB, mutation_prob=GA_MUTATION_PROB,
-    no_improve_patience=GA_NO_IMPROVE_PATIENCE,
+    no_improve_patience=GA_NO_IMPROVE_PATIENCE, polish_steps=GA_MEMETIC_POLISH_STEPS,
 ):
     """Genetischer Algorithmus nach Blank, Kapitel 6.1: fitness-proportionale
     Selektion (Eq. 6.1.2 der Dissertation, da die HQM-Zielgroesse minimiert
     wird - kleinere Fitnesswerte gelten als ueberlegen), Ein-Punkt-Crossover,
     Mutation, elitistische Nachfolge (die besten population_size Individuen
-    aus Eltern- und Kindgeneration ueberleben). Bricht ab, wenn sich das beste
-    Ergebnis ueber no_improve_patience Generationen nicht mehr verbessert.
+    aus Eltern- und Kindgeneration ueberleben). Memetische Hybridisierung:
+    das beste Individuum jeder Generation wird zusaetzlich mit polish_steps
+    Schritten lokaler Suche nachpoliert (siehe Moduldoc). Bricht ab, wenn
+    sich das beste Ergebnis ueber no_improve_patience Generationen nicht mehr
+    verbessert.
 
     Rueckgabe: (beste Standort-Indizes, history der je Generation bislang
     besten Zielgroesse - garantiert monoton fallend, siehe Tests -, Laufzeit
@@ -123,6 +137,12 @@ def genetic_algorithm(
         population = [ind for ind, _ in combined[:population_size]]
         fitness = [f for _, f in combined[:population_size]]
 
+        polished, polish_history = local_search(
+            population[0], candidate_sites, demand_positions, demand_weights, mu, max_iter=polish_steps,
+        )
+        if polish_history[-1] < fitness[0] - 1e-9:
+            population[0], fitness[0] = polished, polish_history[-1]
+
         if fitness[0] < best_obj - 1e-9:
             best, best_obj, stale = list(population[0]), fitness[0], 0
         else:
@@ -138,6 +158,7 @@ def ant_colony_optimization(
     candidate_sites, demand_positions, demand_weights, mu, n_servers, seed,
     n_ants=ACO_N_ANTS, s_upd=ACO_S_UPD, evaporation=ACO_EVAPORATION,
     max_iterations=ACO_MAX_ITERATIONS, no_improve_patience=ACO_NO_IMPROVE_PATIENCE,
+    polish_steps=ACO_MEMETIC_POLISH_STEPS,
 ):
     """Ant-Colony-Optimization nach Blank, Kapitel 6.2: jede Ameise waehlt
     n_servers Standorte nacheinander ohne Zuruecklegen, mit Wahrscheinlichkeit
@@ -145,9 +166,12 @@ def ant_colony_optimization(
     Kandidaten. Je Iteration aktualisieren die s_upd besten Ameisen die
     Pheromone (Eq. 6.2.1 der Dissertation): Verdunstung um den Faktor
     (1 - evaporation), anschliessend Zuwachs proportional zur relativen
-    Loesungsqualitaet (bessere Ameisen tragen mehr beim Update bei). Bricht
-    ab, wenn sich das beste Ergebnis ueber no_improve_patience Iterationen
-    nicht mehr verbessert.
+    Loesungsqualitaet (bessere Ameisen tragen mehr beim Update bei). Memetische
+    Hybridisierung ("ACO + lokale Suche", siehe Moduldoc): die beste Ameise
+    jeder Iteration wird vor der Pheromon-Aktualisierung mit polish_steps
+    Schritten lokaler Suche nachpoliert - die verbesserte Loesung fliesst dann
+    auch in die Pheromon-Verstaerkung ein. Bricht ab, wenn sich das beste
+    Ergebnis ueber no_improve_patience Iterationen nicht mehr verbessert.
 
     Rueckgabe: (beste Standort-Indizes, history der je Iteration bislang
     besten Zielgroesse - garantiert monoton fallend, siehe Tests -, Laufzeit
@@ -177,6 +201,13 @@ def ant_colony_optimization(
                 chosen.append(remaining.pop(pick))
             ants.append(chosen)
         ant_fitness = [objective(ind) for ind in ants]
+
+        best_ant_idx = int(np.argmin(ant_fitness))
+        polished, polish_history = local_search(
+            ants[best_ant_idx], candidate_sites, demand_positions, demand_weights, mu, max_iter=polish_steps,
+        )
+        if polish_history[-1] < ant_fitness[best_ant_idx] - 1e-9:
+            ants[best_ant_idx], ant_fitness[best_ant_idx] = polished, polish_history[-1]
 
         order = list(np.argsort(ant_fitness)[:s_upd])
         quality = np.array([1.0 / ant_fitness[i] for i in order])
