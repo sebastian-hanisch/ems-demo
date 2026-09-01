@@ -16,7 +16,7 @@ Zwei Standortstrategien im Vergleich:
 import numpy as np
 
 from ems_constants import LOCAL_SEARCH_MAX_ITER
-from ems_hqm import solve_hqm
+from ems_hqm import per_demand_expected_distance, solve_hqm
 
 
 def greedy_mclp(candidate_sites, demand_positions, demand_weights, n_servers, time_threshold):
@@ -48,10 +48,15 @@ def greedy_mclp(candidate_sites, demand_positions, demand_weights, n_servers, ti
 
 def hqm_objective(server_indices, candidate_sites, demand_positions, demand_weights, mu):
     """Demand-gewichtete erwartete Distanz (als Näherung für die Reaktions-
-    zeit) über das Hypercube Queueing Model: für jede Server-Nachfrage-
-    Kombination die TATSÄCHLICHE Zuteilungswahrscheinlichkeit aus der
-    stationären Verteilung (nicht die naive Annahme "der nächste Server
-    antwortet immer") multipliziert mit der Entfernung.
+    zeit) über das Hypercube Queueing Model: für jeden Nachfragepunkt die
+    erwartete Distanz bedingt auf tatsächliche Bedienung (siehe
+    per_demand_expected_distance in ems_hqm.py, nutzt die ECHTEN
+    Zuteilungswahrscheinlichkeiten aus der stationären Verteilung, nicht die
+    naive Annahme "der nächste Server antwortet immer"), gewichtet mit dem
+    Anrufvolumen (demand_weights) des jeweiligen Punkts - ein Punkt mit
+    hohem Anrufaufkommen zählt entsprechend mehr als einer mit geringem
+    (vorher zählte jeder Punkt gleich viel, unabhängig vom Anrufvolumen -
+    siehe tests/test_model.py, test_*_weighted_by_demand_volume).
 
     Enthielt früher zusätzlich einen Strafterm für die Verlustwahrschein-
     lichkeit P_loss - der wurde entfernt: P_loss hängt bei diesem Modell
@@ -68,7 +73,8 @@ def hqm_objective(server_indices, candidate_sites, demand_positions, demand_weig
     bewusst nicht implementiert."""
     server_pos = candidate_sites[server_indices]
     result = solve_hqm(server_pos, demand_positions, demand_weights, mu)
-    return float((result["dispatch_freq"] * result["dists"].T).sum())
+    distance_per_demand, _ = per_demand_expected_distance(result["dispatch_freq"], result["dists"])
+    return float((distance_per_demand * demand_weights).sum())
 
 
 def local_search(initial_indices, candidate_sites, demand_positions, demand_weights, mu, max_iter=LOCAL_SEARCH_MAX_ITER, cache=None):

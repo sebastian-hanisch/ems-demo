@@ -3,6 +3,8 @@ Streamlit-Abhängigkeit, damit sie unabhängig testbar sind."""
 
 import numpy as np
 
+from ems_hqm import per_demand_expected_distance
+
 
 def naive_self_assessed_art(server_indices, candidate_sites, demand_positions, demand_weights):
     """Wie ein kongestionsblindes Coverage-Modell die erwartete Reaktionszeit
@@ -18,7 +20,10 @@ def naive_self_assessed_art(server_indices, candidate_sites, demand_positions, d
 def hqm_summary(hqm_result, demand_weights, time_threshold):
     """Fasst ein solve_hqm()-Ergebnis in Kennzahlen zusammen:
     - art_served: erwartete Reaktionszeit, bedingt darauf, dass der Anruf
-      tatsächlich bedient wird (nicht verloren geht)
+      tatsächlich bedient wird (nicht verloren geht) - anrufvolumen-gewichtet
+      über die Nachfragepunkte (siehe per_demand_expected_distance in
+      ems_hqm.py): ein Nachfragepunkt mit hohem Anrufaufkommen zählt mehr
+      als einer mit geringem, nicht jeder Punkt gleich viel.
     - coverage_pct: demand-gewichteter Anteil, bei dem der TATSÄCHLICH
       zuständige Server (nicht der nächstgelegene!) die Zeitschwelle einhält
     - p_loss: Wahrscheinlichkeit, dass ein Anruf verloren geht (alle Server belegt)
@@ -28,10 +33,8 @@ def hqm_summary(hqm_result, demand_weights, time_threshold):
     dists = hqm_result["dists"]  # (J, N)
     total_weight = demand_weights.sum()
 
-    served_mass_per_demand = dispatch_freq.sum(axis=0)  # (J,)
-    served_distance = (dispatch_freq * dists.T).sum()
-    served_mass_total = served_mass_per_demand.sum()
-    art_served = served_distance / served_mass_total if served_mass_total > 1e-9 else float("nan")
+    distance_per_demand, _ = per_demand_expected_distance(dispatch_freq, dists)
+    art_served = (distance_per_demand * demand_weights).sum() / total_weight if total_weight > 1e-9 else float("nan")
 
     within_threshold = dists.T <= time_threshold  # (N, J)
     covered_mass_per_demand = (dispatch_freq * within_threshold).sum(axis=0)  # (J,)

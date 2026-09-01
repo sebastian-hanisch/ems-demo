@@ -118,6 +118,25 @@ def solve_hqm(server_pos, demand_pos, demand_rates, mu):
     }
 
 
+def per_demand_expected_distance(dispatch_freq, dists):
+    """Erwartete Distanz je Nachfragepunkt, bedingt darauf, dass ein Anruf
+    von dort tatsaechlich bedient wird (0, falls ein Punkt nie bedient wird -
+    Randfall bei extremer Auslastung). Wird von ems_evaluation.hqm_summary
+    (fuer die angezeigte Reaktionszeit) und ems_location.hqm_objective (fuer
+    die Zielgroesse der Standortsuche) verwendet - beide muessen das
+    Ergebnis noch mit den Nachfragegewichten (Anrufraten) gewichten, sonst
+    zaehlt jeder Nachfragepunkt gleich viel, unabhaengig von seinem
+    tatsaechlichen Anrufvolumen - genau das war bei beiden Funktionen zuvor
+    der Fall und fuehrte bei ungleich verteilter Nachfrage zu teils
+    drastisch verzerrten Ergebnissen (siehe tests/test_model.py,
+    test_*_weighted_by_demand_volume)."""
+    served_mass_per_demand = dispatch_freq.sum(axis=0)  # (J,)
+    distance_per_demand = np.zeros_like(served_mass_per_demand)
+    nonzero = served_mass_per_demand > 1e-9
+    distance_per_demand[nonzero] = (dispatch_freq * dists.T).sum(axis=0)[nonzero] / served_mass_per_demand[nonzero]
+    return distance_per_demand, served_mass_per_demand
+
+
 def erlang_b(n, offered_load):
     """Klassische Erlang-B-Verlustformel, stabile Rekursion.
     Dient hier v. a. als unabhängiger Korrektheitstest für solve_hqm (siehe

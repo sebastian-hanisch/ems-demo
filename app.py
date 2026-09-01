@@ -430,22 +430,28 @@ eigentlichen Implementierung unabhängiger, scharfer Korrektheitstest (siehe
 $|S|=N$:
 """
     )
-    st.latex(r"\min_S \; \sum_{n \in S}\sum_j f_{n,j}(S) \cdot d(n,j)")
+    st.latex(r"\min_S \; \sum_j \lambda_j \cdot \frac{\sum_{n \in S} f_{n,j}(S) \cdot d(n,j)}{\sum_{n \in S} f_{n,j}(S)}")
     st.markdown(
         r"""
-Die erwartete, demand-gewichtete gefahrene Distanz der tatsächlich bedienten Anrufe - auf
+Für jeden Nachfragepunkt $j$ die erwartete Distanz bedingt auf tatsächliche Bedienung (auf
 Basis der ECHTEN Zuteilungswahrscheinlichkeiten $f_{n,j}$, nicht der naiven Annahme "der
-nächste Server antwortet immer".
+nächste Server antwortet immer"), gewichtet mit dem Anrufaufkommen $\lambda_j$ - ein
+Nachfragepunkt mit hohem Anrufvolumen zählt entsprechend mehr als einer mit geringem. (Eine
+frühere Version zählte hier jeden Nachfragepunkt gleich statt anrufvolumen-gewichtet - ein
+eigenständiger Fehler, der bei stark ungleich verteilter Nachfrage zu deutlich verzerrten
+Ergebnissen führte, siehe `ems_hqm.per_demand_expected_distance`-Docstring sowie
+`tests/test_model.py`, `test_hqm_objective_weighted_by_demand_volume`.)
 
-Eine frühere Version enthielt zusätzlich einen additiven Strafterm $P_{loss}(S) \cdot \Lambda
-\cdot \text{Strafdistanz}$ für die Verlustwahrscheinlichkeit. Der wurde entfernt: wie oben
-gezeigt, ist $P_{loss}(S) = B(N, \Lambda/\mu)$ für JEDE Standortauswahl $S$ identisch - eine
-additive Konstante ändert aber nichts an $\arg\min_S$. Der Term hatte also nie einen Einfluss
-auf das Suchergebnis. (Blanks Dissertation nutzt eine strukturell ähnliche Kennzahl, AELP -
-dort ist sie aber wirksam, weil dort begrenzte statt volle Präferenzlisten je Nachfragepunkt
-verwendet werden, siehe `ems_location.hqm_objective`-Docstring für Details.)
+Enthielt außerdem früher einen additiven Strafterm $P_{loss}(S) \cdot \Lambda \cdot
+\text{Strafdistanz}$ für die Verlustwahrscheinlichkeit. Der wurde entfernt: wie oben gezeigt,
+ist $P_{loss}(S) = B(N, \Lambda/\mu)$ für JEDE Standortauswahl $S$ identisch - eine additive
+Konstante ändert aber nichts an $\arg\min_S$. Der Term hatte also nie einen Einfluss auf das
+Suchergebnis. (Blanks Dissertation nutzt eine strukturell ähnliche Kennzahl, AELP - dort ist
+sie aber wirksam, weil dort begrenzte statt volle Präferenzlisten je Nachfragepunkt verwendet
+werden, siehe `ems_location.hqm_objective`-Docstring für Details.)
 
-**Bezug zum Code:** `ems_hqm.py` (`solve_hqm`) baut $Q$ auf und löst das Gleichungssystem.
+**Bezug zum Code:** `ems_hqm.py` (`solve_hqm`, `per_demand_expected_distance`) baut $Q$ auf,
+löst das Gleichungssystem und berechnet die bedingte Distanz je Nachfragepunkt.
 `ems_location.py` implementiert die naive Greedy-Wahl (`greedy_mclp`) sowie die lokale
 Suche (`local_search`, `hqm_objective`). `ems_metaheuristics.py` implementiert Genetischen
 Algorithmus und Ant-Colony-Optimization auf derselben Zielgröße. `ems_evaluation.py` leitet

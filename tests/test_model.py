@@ -324,6 +324,39 @@ def test_hqm_summary_coverage_and_loss_in_valid_ranges():
     assert summary["art_served"] >= 0.0
 
 
+def test_art_served_weighted_by_demand_volume():
+    """art_served muss ueber ANRUFE mitteln, nicht ueber Nachfragepunkte:
+    ein Punkt mit riesigem Anrufvolumen ganz in der Naehe und einer mit
+    winzigem Volumen sehr weit weg muessen die Reaktionszeit nah an die
+    Distanz des nahen Punkts ziehen - nicht auf einen ungewichteten
+    Mittelwert beider Distanzen (frueherer Fehler, siehe hqm_summary-
+    Docstring)."""
+    server_pos = np.array([[0.0, 0.0], [0.0, 0.0]])
+    demand_pos = np.array([[1.0, 0.0], [100.0, 0.0]])
+    weights = np.array([100.0, 0.001])  # fast alle Anrufe vom nahen Punkt
+
+    result = solve_hqm(server_pos, demand_pos, weights, mu=50.0)
+    summary = hqm_summary(result, weights, time_threshold=5.0)
+
+    assert summary["art_served"] == pytest.approx(1.0, abs=0.01)
+    assert summary["art_served"] < 5.0  # deutlich naeher an 1 als am ungewichteten Mittel (~50.5)
+
+
+def test_hqm_objective_weighted_by_demand_volume():
+    """Dieselbe Anforderung wie oben, aber fuer die Zielgroesse der
+    Standortsuche: bei zwei moeglichen Standorten muss die Suche denjenigen
+    bevorzugen, der den anrufstarken Nachfragepunkt kurz haelt - selbst wenn
+    das den anrufschwachen Punkt schlechter bedient."""
+    candidates = np.array([[1.0, 0.0], [100.0, 0.0]])  # Standort A nah an Punkt 0, Standort B nah an Punkt 1
+    demand_pos = np.array([[1.0, 0.0], [100.0, 0.0]])
+    weights = np.array([100.0, 0.001])  # Punkt 0 macht praktisch alle Anrufe aus
+
+    obj_near_high_volume = hqm_objective([0], candidates, demand_pos, weights, mu=50.0)  # 1 Server bei Standort A
+    obj_near_low_volume = hqm_objective([1], candidates, demand_pos, weights, mu=50.0)   # 1 Server bei Standort B
+
+    assert obj_near_high_volume < obj_near_low_volume
+
+
 # ==========================================================================
 # PDF-Export
 # ==========================================================================
