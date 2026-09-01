@@ -70,7 +70,7 @@ def convergence_figure(history, title):
         line=dict(color="#14233B", width=2),
     ))
     fig.update_layout(
-        title=title, xaxis_title="Tausch-Iteration", yaxis_title="Zielgröße (gewichtete Distanz + Verlust-Strafe)",
+        title=title, xaxis_title="Tausch-Iteration", yaxis_title="Zielgröße (anrufvolumen-gewichtete erwartete Distanz)",
         height=260, margin=dict(l=10, r=10, t=40, b=10),
     )
     fig.update_xaxes(fixedrange=True)
@@ -94,7 +94,7 @@ def multi_convergence_figure(series, title):
         ))
     fig.update_layout(
         title=title, xaxis_title="Iteration / Generation",
-        yaxis_title="Zielgröße (gewichtete Distanz + Verlust-Strafe)",
+        yaxis_title="Zielgröße (anrufvolumen-gewichtete erwartete Distanz)",
         height=320, margin=dict(l=10, r=10, t=40, b=10),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
     )

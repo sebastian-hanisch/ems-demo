@@ -315,7 +315,7 @@ verwenden, aber laut einer separaten Metaheuristik-Vergleichsstudie für Ambulan
 
         ga_obj, aco_obj, ls_obj = meta["ga_history"][-1], meta["aco_history"][-1], data["history"][-1]
         t1, t2, t3 = st.columns(3)
-        t1.metric("Lokale Suche", f"{ls_obj:.3f}", help="Zielgröße (gewichtete Distanz + Verlust-Strafe)")
+        t1.metric("Lokale Suche", f"{ls_obj:.3f}", help="Zielgröße (anrufvolumen-gewichtete erwartete Distanz)")
         t2.metric("Genetischer Algorithmus", f"{ga_obj:.3f}", delta=f"{ga_obj - ls_obj:+.3f} ggü. lokaler Suche", delta_color="inverse")
         t2.caption(f"Rechenzeit: {meta['ga_time']*1000:.0f} ms")
         t3.metric("Ant-Colony-Optimization", f"{aco_obj:.3f}", delta=f"{aco_obj - ls_obj:+.3f} ggü. lokaler Suche", delta_color="inverse")
