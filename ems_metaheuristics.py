@@ -3,8 +3,8 @@ Zwei weitere Standortstrategien, die Blank (Dissertation, Kapitel 6) explizit
 miteinander vergleicht: Genetischer Algorithmus (GA) und Ant-Colony-
 Optimization (ACO). Beide werden hier - wie dort - direkt auf dieselbe
 HQM-Zielgroesse angewandt wie die lokale Suche in ems_location.py
-(gewichtete erwartete Distanz plus Strafterm fuer verlorene Anrufe, siehe
-hqm_objective).
+(demand-gewichtete erwartete Distanz auf Basis der tatsaechlichen
+Zuteilungswahrscheinlichkeiten, siehe hqm_objective).
 
 Blank kommt in eigenen Experimenten zu einem klaren Ergebnis (S. 168f. der
 Dissertation): "the ACO performs better than the GA in the proposed

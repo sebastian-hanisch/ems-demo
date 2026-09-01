@@ -10,16 +10,13 @@ Zwei Standortstrategien im Vergleich:
 2. HQM-bewusste lokale Suche: startet bei einer Konfiguration und tauscht
    wiederholt einen platzierten gegen einen nicht platzierten Standort, wenn
    das die über das Hypercube Queueing Model TATSÄCHLICH berechnete
-   Zielgröße verbessert - Verlust-Wahrscheinlichkeit (kein Fahrzeug frei)
-   eingeschlossen.
+   demand-gewichtete erwartete Distanz verbessert.
 """
 
 import numpy as np
 
-from ems_constants import LOCAL_SEARCH_MAX_ITER, MAP_SIZE
+from ems_constants import LOCAL_SEARCH_MAX_ITER
 from ems_hqm import solve_hqm
-
-LOST_CALL_PENALTY_DISTANCE = MAP_SIZE * 2.0  # siehe hqm_objective()
 
 
 def greedy_mclp(candidate_sites, demand_positions, demand_weights, n_servers, time_threshold):
@@ -51,15 +48,27 @@ def greedy_mclp(candidate_sites, demand_positions, demand_weights, n_servers, ti
 
 def hqm_objective(server_indices, candidate_sites, demand_positions, demand_weights, mu):
     """Demand-gewichtete erwartete Distanz (als Näherung für die Reaktions-
-    zeit) über das Hypercube Queueing Model - inklusive eines Strafterms für
-    verlorene Anrufe (alle Fahrzeuge belegt). Ohne diesen Strafterm könnte
-    die lokale Suche eine hohe Verlustwahrscheinlichkeit in Kauf nehmen,
-    solange die noch bedienten Anrufe im Schnitt kurze Wege haben - das wäre
-    für ein Rettungsdienstsystem ein unsinniges Optimum."""
+    zeit) über das Hypercube Queueing Model: für jede Server-Nachfrage-
+    Kombination die TATSÄCHLICHE Zuteilungswahrscheinlichkeit aus der
+    stationären Verteilung (nicht die naive Annahme "der nächste Server
+    antwortet immer") multipliziert mit der Entfernung.
+
+    Enthielt früher zusätzlich einen Strafterm für die Verlustwahrschein-
+    lichkeit P_loss - der wurde entfernt: P_loss hängt bei diesem Modell
+    (volle, unbegrenzte Präferenzliste je Nachfragepunkt, siehe
+    build_preference_lists in ems_hqm.py) laut Erlang-B-Identität NUR von
+    der Fahrzeuganzahl und der Systemauslastung ab, nicht von der
+    Standortwahl - der Term war für JEDE Konfiguration exakt identisch und
+    hatte dadurch keinerlei Einfluss auf das Suchergebnis (eine additive
+    Konstante ändert kein Minimierungsproblem). Blanks Dissertation
+    (Kapitel 2.2.2/4.1, AELP-Kennzahl) bestätigt das sogar explizit als
+    Spezialfall bei vollem Backup - ihre eigene Verlust-Kennzahl ist nur
+    deshalb ein wirksamer Optimierungshebel, weil sie mit BEGRENZTEN
+    Präferenzlisten (Districting/Backup-Level) arbeitet, was diese Demo
+    bewusst nicht implementiert."""
     server_pos = candidate_sites[server_indices]
     result = solve_hqm(server_pos, demand_positions, demand_weights, mu)
-    served_distance = float((result["dispatch_freq"] * result["dists"].T).sum())
-    return served_distance + result["p_loss"] * demand_weights.sum() * LOST_CALL_PENALTY_DISTANCE
+    return float((result["dispatch_freq"] * result["dists"].T).sum())
 
 
 def local_search(initial_indices, candidate_sites, demand_positions, demand_weights, mu, max_iter=LOCAL_SEARCH_MAX_ITER, cache=None):

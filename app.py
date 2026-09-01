@@ -261,8 +261,8 @@ with st.expander("🔧 Lokale Suche: wie kam die HQM-bewusste Lösung zustande?"
     st.plotly_chart(convergence_figure(data["history"], "Zielgröße über die Tausch-Iterationen"), use_container_width=True)
     st.caption(
         "Startpunkt ist die naive Greedy-Lösung. In jeder Iteration wird der Standorttausch gewählt, der die "
-        "über das HQM berechnete Zielgröße (gewichtete Reaktionszeit + Strafterm für verlorene Anrufe) am "
-        "stärksten verbessert - bis kein verbessernder Tausch mehr gefunden wird."
+        "über das HQM berechnete, tatsächliche (verfügbarkeits-bewusste) Reaktionszeit am stärksten "
+        "verbessert - bis kein verbessernder Tausch mehr gefunden wird."
     )
 
 with st.expander("🧬 Metaheuristik-Vergleich: Genetischer Algorithmus vs. Ant-Colony-Optimization"):
@@ -354,10 +354,14 @@ Fahrzeug tatsächlich antwortet, die reale Reaktionszeit, die Abdeckung und die
 Verlustwahrscheinlichkeit.
 
 **HQM-bewusste lokale Suche:** Startet bei der naiven Lösung und tauscht wiederholt einen
-Standort gegen einen besseren, sofern das die über das HQM berechnete Zielgröße verbessert -
-bis keine Verbesserung mehr gefunden wird. Ohne Strafterm für verlorene Anrufe könnte die
-Suche eine hohe Verlustwahrscheinlichkeit in Kauf nehmen, solange die noch bedienten Anrufe
-kurze Wege haben - deshalb fließt die Verlustwahrscheinlichkeit direkt in die Zielgröße ein.
+Standort gegen einen besseren, sofern das die über das HQM berechnete, tatsächliche
+(verfügbarkeits-bewusste) Reaktionszeit verbessert - bis keine Verbesserung mehr gefunden wird.
+Eine frühere Version dieser Zielgröße enthielt zusätzlich einen Strafterm für die
+Verlustwahrscheinlichkeit - der wurde wieder entfernt, weil sie bei diesem Modell (volle
+Präferenzliste je Nachfragepunkt) laut Erlang-B-Identität nachweislich nur von Fahrzeuganzahl
+und Systemauslastung abhängt, nicht von der Standortwahl (siehe „📐 Mathematische
+Formulierung“ unten) - ein solcher Term wäre für jede Konfiguration identisch und damit ohne
+jeden Einfluss auf das Suchergebnis gewesen.
 
 **Genetischer Algorithmus und Ant-Colony-Optimization:** Zwei weitere, populationsbasierte
 Metaheuristiken für dieselbe Zielgröße (siehe Expander "Metaheuristik-Vergleich" oben). Der
@@ -426,13 +430,20 @@ eigentlichen Implementierung unabhängiger, scharfer Korrektheitstest (siehe
 $|S|=N$:
 """
     )
-    st.latex(r"\min_S \; \sum_{n \in S}\sum_j f_{n,j}(S) \cdot d(n,j) \;+\; P_{loss}(S) \cdot \Lambda \cdot \text{Strafdistanz}")
+    st.latex(r"\min_S \; \sum_{n \in S}\sum_j f_{n,j}(S) \cdot d(n,j)")
     st.markdown(
         r"""
-mit $\Lambda = \sum_j \lambda_j$. Der erste Term ist die erwartete, demand-gewichtete
-gefahrene Distanz der tatsächlich bedienten Anrufe; der zweite Term bestraft eine hohe
-Verlustwahrscheinlichkeit - ohne ihn könnte die Suche viele Anrufe "verlieren", solange die
-verbleibenden im Schnitt kurze Wege haben.
+Die erwartete, demand-gewichtete gefahrene Distanz der tatsächlich bedienten Anrufe - auf
+Basis der ECHTEN Zuteilungswahrscheinlichkeiten $f_{n,j}$, nicht der naiven Annahme "der
+nächste Server antwortet immer".
+
+Eine frühere Version enthielt zusätzlich einen additiven Strafterm $P_{loss}(S) \cdot \Lambda
+\cdot \text{Strafdistanz}$ für die Verlustwahrscheinlichkeit. Der wurde entfernt: wie oben
+gezeigt, ist $P_{loss}(S) = B(N, \Lambda/\mu)$ für JEDE Standortauswahl $S$ identisch - eine
+additive Konstante ändert aber nichts an $\arg\min_S$. Der Term hatte also nie einen Einfluss
+auf das Suchergebnis. (Blanks Dissertation nutzt eine strukturell ähnliche Kennzahl, AELP -
+dort ist sie aber wirksam, weil dort begrenzte statt volle Präferenzlisten je Nachfragepunkt
+verwendet werden, siehe `ems_location.hqm_objective`-Docstring für Details.)
 
 **Bezug zum Code:** `ems_hqm.py` (`solve_hqm`) baut $Q$ auf und löst das Gleichungssystem.
 `ems_location.py` implementiert die naive Greedy-Wahl (`greedy_mclp`) sowie die lokale
