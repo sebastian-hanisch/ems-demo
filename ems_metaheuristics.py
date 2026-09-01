@@ -26,6 +26,12 @@ Studien - u.a. eine Metaheuristik-Vergleichsstudie fuer Ambulanz-Allokation
 (GECCO 2023) sowie der allgemeine ACO-Literaturstrang "ACO + lokale Suche" -
 finden, dass diese Hybridisierung reine populationsbasierte Verfahren
 uebertrifft.
+
+Beide Verfahren memoisieren HQM-Auswertungen ueber ein lokales cache-dict
+(Schluessel: sortiertes Tupel der Standort-Indizes), das auch an die
+local_search-Politur weitergereicht wird - bei hohen Fahrzeugzahlen (grosser
+HQM-Zustandsraum) werden ansonsten dieselben Konfigurationen wiederholt neu
+geloest, gerade waehrend der spaeten, kaum noch verbessernden Generationen.
 """
 
 import time
@@ -101,9 +107,13 @@ def genetic_algorithm(
     start = time.perf_counter()
     n_candidates = len(candidate_sites)
     rng = np.random.default_rng(seed)
+    cache = {}
 
     def objective(individual):
-        return hqm_objective(individual, candidate_sites, demand_positions, demand_weights, mu)
+        key = tuple(sorted(individual))
+        if key not in cache:
+            cache[key] = hqm_objective(individual, candidate_sites, demand_positions, demand_weights, mu)
+        return cache[key]
 
     population = [_random_individual(rng, n_candidates, n_servers) for _ in range(population_size)]
     fitness = [objective(ind) for ind in population]
@@ -138,7 +148,7 @@ def genetic_algorithm(
         fitness = [f for _, f in combined[:population_size]]
 
         polished, polish_history = local_search(
-            population[0], candidate_sites, demand_positions, demand_weights, mu, max_iter=polish_steps,
+            population[0], candidate_sites, demand_positions, demand_weights, mu, max_iter=polish_steps, cache=cache,
         )
         if polish_history[-1] < fitness[0] - 1e-9:
             population[0], fitness[0] = polished, polish_history[-1]
@@ -179,9 +189,13 @@ def ant_colony_optimization(
     start = time.perf_counter()
     n_candidates = len(candidate_sites)
     rng = np.random.default_rng(seed)
+    cache = {}
 
     def objective(individual):
-        return hqm_objective(individual, candidate_sites, demand_positions, demand_weights, mu)
+        key = tuple(sorted(individual))
+        if key not in cache:
+            cache[key] = hqm_objective(individual, candidate_sites, demand_positions, demand_weights, mu)
+        return cache[key]
 
     tau = np.full(n_candidates, 1.0 / n_candidates)
 
@@ -204,7 +218,7 @@ def ant_colony_optimization(
 
         best_ant_idx = int(np.argmin(ant_fitness))
         polished, polish_history = local_search(
-            ants[best_ant_idx], candidate_sites, demand_positions, demand_weights, mu, max_iter=polish_steps,
+            ants[best_ant_idx], candidate_sites, demand_positions, demand_weights, mu, max_iter=polish_steps, cache=cache,
         )
         if polish_history[-1] < ant_fitness[best_ant_idx] - 1e-9:
             ants[best_ant_idx], ant_fitness[best_ant_idx] = polished, polish_history[-1]

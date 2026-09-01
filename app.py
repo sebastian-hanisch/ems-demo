@@ -32,6 +32,20 @@ Korrektheitstest.
 Lauffaehig mit: streamlit run app.py
 """
 
+import os
+
+# MUSS vor dem ersten numpy-Import passieren: OpenBLAS liest die Thread-Anzahl
+# beim Laden der Bibliothek (also beim ersten numpy-Import ueberhaupt), nicht
+# lazy bei jedem Aufruf - nachtraeglich gesetzt wirkt die Variable nicht mehr.
+# Grund: solve_hqm() loest viele KLEINE Gleichungssysteme (bis 2^8=256x256,
+# siehe ems_hqm.py) - fuer solche Groessen frisst der Synchronisationsoverhead
+# von OpenBLAS' Multi-Thread-Koordination mehr Zeit als er einspart. Gemessen
+# (siehe Entwicklungsprotokoll): ~20x schneller pro Loesung mit einem Thread
+# statt der OpenBLAS-Standardeinstellung (bis zu 24 Threads).
+os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
+os.environ.setdefault("OMP_NUM_THREADS", "1")
+os.environ.setdefault("MKL_NUM_THREADS", "1")
+
 import numpy as np
 import streamlit as st
 

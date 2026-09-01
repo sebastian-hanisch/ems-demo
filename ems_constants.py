@@ -13,10 +13,12 @@ DEFAULT_UTILIZATION = 0.5   # Ziel-Systemauslastung (lambda_total / (N * mu))
 DEFAULT_TIME_THRESHOLD = 4.0  # Entfernungs-/Zeit-Schwelle für "Abdeckung"
 
 # Obergrenze für die Anzahl platzierter Fahrzeuge: bei N Fahrzeugen hat die
-# Markov-Kette 2^N Zustände. Bei N=8 (256 Zustände) dauert eine Lösung noch
-# rund 15ms - bei der lokalen Suche werden pro Konfiguration mehrere Dutzend
-# Nachbarn ausgewertet, N=8 bleibt damit auf kostenlosem Hosting reaktionsschnell.
-# Siehe Prototyp-Benchmark: N=10 (1024 Zustände) liegt schon bei ~65ms/Lösung.
+# Markov-Kette 2^N Zustände. Bei N=8 (256 Zustände) dauert eine Lösung rund
+# 0,5ms (siehe OPENBLAS_NUM_THREADS=1 in app.py/conftest.py - ohne diese
+# Begrenzung braucht OpenBLAS' Multi-Thread-Koordination bei so kleinen
+# Matrizen selbst ~15-20x so lange wie die eigentliche Rechnung) - bei der
+# lokalen Suche werden pro Konfiguration mehrere Dutzend Nachbarn ausgewertet,
+# N=8 bleibt damit auf kostenlosem Hosting reaktionsschnell.
 MAX_SERVERS = 8
 
 LOCAL_SEARCH_MAX_ITER = 30

@@ -62,14 +62,35 @@ def hqm_objective(server_indices, candidate_sites, demand_positions, demand_weig
     return served_distance + result["p_loss"] * demand_weights.sum() * LOST_CALL_PENALTY_DISTANCE
 
 
-def local_search(initial_indices, candidate_sites, demand_positions, demand_weights, mu, max_iter=LOCAL_SEARCH_MAX_ITER):
+def local_search(initial_indices, candidate_sites, demand_positions, demand_weights, mu, max_iter=LOCAL_SEARCH_MAX_ITER, cache=None):
     """Best-Improvement-Lokalsuche: tauscht in jeder Iteration den Zug, der
     die HQM-Zielgröße am meisten verbessert, bis keine Verbesserung mehr
     gefunden wird oder max_iter erreicht ist. Gibt zusätzlich die Historie
-    der Zielwerte zurück (für eine "Konvergenz"-Anzeige im UI)."""
+    der Zielwerte zurück (für eine "Konvergenz"-Anzeige im UI).
+
+    (Ein First-Improvement-Variante - der erste statt der beste verbessernde
+    Zug je Iteration - wurde getestet, war aber ueber 10 Testszenarien im
+    Schnitt 48% LANGSAMER: sie braucht 2-5x mehr Iterationen bis zur
+    Konvergenz, was den Einspareffekt pro Iteration wieder auffrisst. Deshalb
+    bleibt es bei Best-Improvement.)
+
+    cache: optionales dict {Standort-Tupel: Zielgroesse} zur Memoisierung -
+    wird von den Metaheuristiken in ems_metaheuristics.py hereingereicht, die
+    local_search auch als Politur-Schritt aufrufen, damit dort schon
+    berechnete Konfigurationen nicht erneut das (teure) HQM-Gleichungssystem
+    loesen muessen. Ohne uebergebenes dict wird lokal ein neues angelegt."""
+    if cache is None:
+        cache = {}
+
+    def objective(indices):
+        key = tuple(sorted(indices))
+        if key not in cache:
+            cache[key] = hqm_objective(indices, candidate_sites, demand_positions, demand_weights, mu)
+        return cache[key]
+
     n_candidates = len(candidate_sites)
     current = list(initial_indices)
-    current_obj = hqm_objective(current, candidate_sites, demand_positions, demand_weights, mu)
+    current_obj = objective(current)
     history = [current_obj]
 
     for _ in range(max_iter):
@@ -81,7 +102,7 @@ def local_search(initial_indices, candidate_sites, demand_positions, demand_weig
                     continue
                 candidate = current.copy()
                 candidate[out_pos] = in_idx
-                obj = hqm_objective(candidate, candidate_sites, demand_positions, demand_weights, mu)
+                obj = objective(candidate)
                 if obj < best_obj - 1e-9:
                     best_obj, best_swap = obj, (out_pos, in_idx)
         if best_swap is None:
