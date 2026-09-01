@@ -10,7 +10,7 @@ klassisches Erlang-B-System). Die Zustandsübergänge bilden eine zeitkonti-
 nuierliche Markov-Kette, deren stationäre Verteilung pi exakt über ein
 lineares Gleichungssystem berechnet wird (kein Simulationsrauschen).
 
-Validiert (siehe Entwicklungsprotokoll/Tests): Für ein System mit homogener
+Validiert (siehe tests/test_model.py): Für ein System mit homogener
 Bedienrate mu ist die Wahrscheinlichkeit "alle Fahrzeuge beschäftigt" IMMER
 gleich der klassischen Erlang-B-Formel B(N, lambda/mu) - komplett unabhängig
 von der räumlichen Anordnung oder den Präferenzlisten. Das folgt daraus, dass

@@ -10,8 +10,11 @@ vereinfachten Ausschnitt der dort entwickelten Standortoptimierung - inklusive
 der beiden dort verglichenen Metaheuristiken (Genetischer Algorithmus und
 Ant-Colony-Optimization, siehe ems_metaheuristics.py) - bewusst ohne die volle
 Modelltiefe der Dissertation (Goal Programming, robuste Optimierung ueber
-mehrere Szenarien, Dynamic Caching Strategy), um das Kernprinzip greifbar zu
-machen.
+mehrere Szenarien), um das Kernprinzip greifbar zu machen. Fuer die
+Rechenzeit bei hohen Fahrzeugzahlen sorgt eine einfache Memoisierung der
+HQM-Auswertungen (siehe local_search/cache in ems_location.py) - eine
+schlankere Variante von Blanks "Dynamic Caching Strategy", nicht deren
+volle Umsetzung.
 
 Kernidee: Ein Fahrzeug (Server) ist nicht immer verfuegbar, wenn ein Notruf
 eingeht - es koennte gerade im Einsatz sein. Das Hypercube Queueing Model
@@ -39,9 +42,9 @@ import os
 # lazy bei jedem Aufruf - nachtraeglich gesetzt wirkt die Variable nicht mehr.
 # Grund: solve_hqm() loest viele KLEINE Gleichungssysteme (bis 2^8=256x256,
 # siehe ems_hqm.py) - fuer solche Groessen frisst der Synchronisationsoverhead
-# von OpenBLAS' Multi-Thread-Koordination mehr Zeit als er einspart. Gemessen
-# (siehe Entwicklungsprotokoll): ~20x schneller pro Loesung mit einem Thread
-# statt der OpenBLAS-Standardeinstellung (bis zu 24 Threads).
+# von OpenBLAS' Multi-Thread-Koordination mehr Zeit als er einspart. Per
+# cProfile gemessen: ~20x schneller pro Loesung mit einem Thread statt der
+# OpenBLAS-Standardeinstellung (bis zu 24 Threads).
 os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
 os.environ.setdefault("OMP_NUM_THREADS", "1")
 os.environ.setdefault("MKL_NUM_THREADS", "1")
@@ -145,7 +148,7 @@ with preset_col3:
     st.button(
         "🏙️ Größeres System", use_container_width=True,
         on_click=apply_preset, args=(6, 14, 18, 3, 0.4, 7, 0.4, 0.7, 3.5),
-        help="Mehr Fahrzeuge und Nachfragepunkte - Rechenzeit für die lokale Suche steigt spürbar.",
+        help="Mehr Fahrzeuge und Nachfragepunkte - mehr Systemzustände (2^N), die exakte Lösung dauert dadurch etwas länger.",
     )
 
 st.caption(
@@ -291,7 +294,7 @@ verwenden, aber laut einer separaten Metaheuristik-Vergleichsstudie für Ambulan
 (GECCO 2023) reine populationsbasierte Verfahren übertrifft.
 """
     )
-    run_comparison = st.button("🧬 Vergleich berechnen (kann einige Sekunden dauern)")
+    run_comparison = st.button("🧬 Vergleich berechnen (bei vielen Fahrzeugen ca. 1-2 Sekunden)")
     if run_comparison:
         st.session_state["metaheuristic_cache_key"] = cache_key
 
@@ -377,7 +380,7 @@ mit dem Auslastungs-Regler direkt nachvollziehen.
 **In echten Projekten** kämen meist weitere Aspekte dazu (mehrtägige Nachfrageszenarien,
 mehrere gewichtete Zielgrößen, Backup-Fahrzeugtypen, echte Straßennetze statt Luftlinie) -
 genau das behandelt die Dissertation, auf der diese Demo aufbaut, in voller Tiefe
-(Goal Programming, robuste Optimierung, Ant-Colony-Optimization) - das Grundprinzip aus
+(Goal Programming, robuste Optimierung über mehrere Szenarien) - das Grundprinzip aus
 Markov-Kette und Standortsuche bleibt aber dasselbe.
 """
     )
