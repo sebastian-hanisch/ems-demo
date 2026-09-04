@@ -1,10 +1,10 @@
 """
 Erzeugt einen Standortplan als downloadbares PDF (in-memory) - Zusammenfassung
-+ Koordinatenliste der gewaehlten Fahrzeugstandorte.
++ Koordinatenliste der gewählten Fahrzeugstandorte.
 
-Hinweis: nur ASCII-Zeichen in den an FPDF uebergebenen Strings (Helvetica-
-Kernschrift kann Sonderzeichen wie Umlaute/Halbgeviertstrich nicht sicher
-darstellen - siehe Konvention in den anderen Demos dieses Workspace).
+Umlaute sind unproblematisch (Latin-1, von der FPDF-Kernschrift Helvetica
+unterstützt) - vermieden werden nur echte Sonderzeichen wie Halbgeviertstriche
+(–) und das Euro-Zeichen (€), die die Kernschrift nicht darstellen kann.
 """
 
 import time
@@ -38,7 +38,7 @@ def generate_location_plan_pdf(label, chosen_indices, candidate_sites, metrics_n
     pdf.cell(60, 6, "Naiv (Coverage)", new_x=XPos.RIGHT, new_y=YPos.TOP)
     pdf.cell(60, 6, "HQM-bewusst", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
     pdf.set_font("Helvetica", "", 10)
-    pdf.cell(60, 6, "Reaktionszeit (real, ueber HQM)", new_x=XPos.RIGHT, new_y=YPos.TOP)
+    pdf.cell(60, 6, "Reaktionszeit (real, über HQM)", new_x=XPos.RIGHT, new_y=YPos.TOP)
     pdf.cell(60, 6, f"{metrics_naive['art_served']:.2f}", new_x=XPos.RIGHT, new_y=YPos.TOP)
     pdf.cell(60, 6, f"{metrics_hqm['art_served']:.2f}", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
     pdf.cell(60, 6, "Abdeckung", new_x=XPos.RIGHT, new_y=YPos.TOP)
@@ -50,7 +50,7 @@ def generate_location_plan_pdf(label, chosen_indices, candidate_sites, metrics_n
     pdf.ln(4)
 
     pdf.set_font("Helvetica", "B", 11)
-    pdf.cell(0, 8, "Fahrzeugstandorte (HQM-bewusste Loesung)", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+    pdf.cell(0, 8, "Fahrzeugstandorte (HQM-bewusste Lösung)", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
     headers = ["#", "x-Position", "y-Position"]
     widths = [15, 60, 60]
     pdf.set_font("Helvetica", "B", 9)
