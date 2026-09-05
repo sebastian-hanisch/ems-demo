@@ -239,15 +239,15 @@ map_col1, map_col2 = st.columns(2)
 with map_col1:
     st.plotly_chart(
         map_figure(demand_positions, demand_weights, candidate_sites, naive_indices, "Naive Coverage-Wahl (Greedy-MCLP)", time_threshold),
-        use_container_width=True,
+        use_container_width=True, key="map_naive",
     )
-    st.plotly_chart(workload_figure(metrics_naive["workload"], "Auslastung je Fahrzeug (naiv)"), use_container_width=True)
+    st.plotly_chart(workload_figure(metrics_naive["workload"], "Auslastung je Fahrzeug (naiv)"), use_container_width=True, key="workload_naive")
 with map_col2:
     st.plotly_chart(
         map_figure(demand_positions, demand_weights, candidate_sites, hqm_indices, "HQM-bewusste Standortwahl", time_threshold),
-        use_container_width=True,
+        use_container_width=True, key="map_hqm",
     )
-    st.plotly_chart(workload_figure(metrics_hqm["workload"], "Auslastung je Fahrzeug (HQM-bewusst)"), use_container_width=True)
+    st.plotly_chart(workload_figure(metrics_hqm["workload"], "Auslastung je Fahrzeug (HQM-bewusst)"), use_container_width=True, key="workload_hqm")
 
 pdf_bytes = generate_location_plan_pdf("Rettungsdienst-Standortplanung", hqm_indices, candidate_sites, metrics_naive, metrics_hqm, n_servers, utilization)
 st.download_button(
@@ -258,7 +258,7 @@ st.download_button(
 st.markdown("---")
 
 with st.expander("🔧 Lokale Suche: wie kam die HQM-bewusste Lösung zustande?"):
-    st.plotly_chart(convergence_figure(data["history"], "Zielgröße über die Tausch-Iterationen"), use_container_width=True)
+    st.plotly_chart(convergence_figure(data["history"], "Zielgröße über die Tausch-Iterationen"), use_container_width=True, key="convergence_local_search")
     st.caption(
         "Startpunkt ist die naive Greedy-Lösung. In jeder Iteration wird der Standorttausch gewählt, der die "
         "über das HQM berechnete, tatsächliche (verfügbarkeits-bewusste) Reaktionszeit am stärksten "
@@ -310,7 +310,7 @@ verwenden, aber laut einer separaten Metaheuristik-Vergleichsstudie für Ambulan
                 },
                 "Zielgröße über Iterationen/Generationen je Verfahren",
             ),
-            use_container_width=True,
+            use_container_width=True, key="multi_convergence",
         )
 
         ga_obj, aco_obj, ls_obj = meta["ga_history"][-1], meta["aco_history"][-1], data["history"][-1]
