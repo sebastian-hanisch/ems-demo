@@ -134,19 +134,19 @@ st.caption("🎯 Schnellstart – ein Beispielszenario laden:")
 preset_col1, preset_col2, preset_col3 = st.columns(3)
 with preset_col1:
     st.button(
-        "🌙 Ruhige Nachtschicht", use_container_width=True,
+        "🌙 Ruhige Nachtschicht", width="stretch",
         on_click=apply_preset, args=(4, 10, 12, 2, 0.5, 42, 0.5, 0.25, 4.0),
         help="Niedrige Auslastung - naive und HQM-bewusste Standortwahl unterscheiden sich kaum.",
     )
 with preset_col2:
     st.button(
-        "🔥 Stoßzeit", use_container_width=True,
+        "🔥 Stoßzeit", width="stretch",
         on_click=apply_preset, args=(4, 10, 12, 2, 0.5, 42, 0.5, 0.75, 4.0),
         help="Hohe Auslastung - hier zeigt sich der Unterschied zwischen beiden Strategien deutlich.",
     )
 with preset_col3:
     st.button(
-        "🏙️ Größeres System", use_container_width=True,
+        "🏙️ Größeres System", width="stretch",
         on_click=apply_preset, args=(6, 14, 18, 3, 0.4, 7, 0.4, 0.7, 3.5),
         help="Mehr Fahrzeuge und Nachfragepunkte - mehr Systemzustände (2^N), die exakte Lösung dauert dadurch etwas länger.",
     )
@@ -185,7 +185,7 @@ with st.sidebar:
         help="Vereinfachend: 1 Karteneinheit ≈ 1 Zeiteinheit Fahrzeit (wie bei den anderen synthetischen Karten dieses Portfolios).",
     )
 
-    st.button("🎲 Neues Szenario generieren", use_container_width=True, on_click=randomize_seed)
+    st.button("🎲 Neues Szenario generieren", width="stretch", on_click=randomize_seed)
 
 if n_candidates <= n_servers:
     st.warning("Die Anzahl Standort-Kandidaten muss größer als die Anzahl Fahrzeuge sein. Bitte in der Seitenleiste anpassen.")
@@ -239,15 +239,15 @@ map_col1, map_col2 = st.columns(2)
 with map_col1:
     st.plotly_chart(
         map_figure(demand_positions, demand_weights, candidate_sites, naive_indices, "Naive Coverage-Wahl (Greedy-MCLP)", time_threshold),
-        use_container_width=True, key="map_naive",
+        width="stretch", key="map_naive",
     )
-    st.plotly_chart(workload_figure(metrics_naive["workload"], "Auslastung je Fahrzeug (naiv)"), use_container_width=True, key="workload_naive")
+    st.plotly_chart(workload_figure(metrics_naive["workload"], "Auslastung je Fahrzeug (naiv)"), width="stretch", key="workload_naive")
 with map_col2:
     st.plotly_chart(
         map_figure(demand_positions, demand_weights, candidate_sites, hqm_indices, "HQM-bewusste Standortwahl", time_threshold),
-        use_container_width=True, key="map_hqm",
+        width="stretch", key="map_hqm",
     )
-    st.plotly_chart(workload_figure(metrics_hqm["workload"], "Auslastung je Fahrzeug (HQM-bewusst)"), use_container_width=True, key="workload_hqm")
+    st.plotly_chart(workload_figure(metrics_hqm["workload"], "Auslastung je Fahrzeug (HQM-bewusst)"), width="stretch", key="workload_hqm")
 
 pdf_bytes = generate_location_plan_pdf("Rettungsdienst-Standortplanung", hqm_indices, candidate_sites, metrics_naive, metrics_hqm, n_servers, utilization)
 st.download_button(
@@ -258,7 +258,7 @@ st.download_button(
 st.markdown("---")
 
 with st.expander("🔧 Lokale Suche: wie kam die HQM-bewusste Lösung zustande?"):
-    st.plotly_chart(convergence_figure(data["history"], "Zielgröße über die Tausch-Iterationen"), use_container_width=True, key="convergence_local_search")
+    st.plotly_chart(convergence_figure(data["history"], "Zielgröße über die Tausch-Iterationen"), width="stretch", key="convergence_local_search")
     st.caption(
         "Startpunkt ist die naive Greedy-Lösung. In jeder Iteration wird der Standorttausch gewählt, der die "
         "über das HQM berechnete, tatsächliche (verfügbarkeits-bewusste) Reaktionszeit am stärksten "
@@ -310,7 +310,7 @@ verwenden, aber laut einer separaten Metaheuristik-Vergleichsstudie für Ambulan
                 },
                 "Zielgröße über Iterationen/Generationen je Verfahren",
             ),
-            use_container_width=True, key="multi_convergence",
+            width="stretch", key="multi_convergence",
         )
 
         ga_obj, aco_obj, ls_obj = meta["ga_history"][-1], meta["aco_history"][-1], data["history"][-1]
