@@ -29,6 +29,11 @@ Ausgangspunkt war die Frage, ob sich aus Blanks Dissertation eine gute Ergänzun
 
 **Später erweitert** um Genetischen Algorithmus und Ant-Colony-Optimization (`ems_metaheuristics.py`) — direkt nach Blanks Kapitel 6 (Verfahren) und 7.1 (Vergleich, S. 168f.), inklusive seines eigenen, wörtlich zitierten Befunds *„the ACO performs better than the GA in the proposed experimental setting"*, den man über den Vergleichs-Button am eigenen Szenario nachvollziehen kann. Beide Verfahren zusätzlich memetisch hybridisiert (bestes Individuum je Generation/Iteration wird mit der bestehenden lokalen Suche nachpoliert) und über ein gemeinsames Cache-Dict memoisiert, damit wiederholt betrachtete Standort-Konfigurationen nicht erneut das Gleichungssystem lösen müssen. Dabei auch eine Vereinfachung gefunden: Die Zielgröße der lokalen Suche enthielt ursprünglich einen Strafterm für die Verlustwahrscheinlichkeit — der ist wegen der Erlang-B-Identität für jede Konfiguration exakt identisch (eine additive Konstante ändert kein Minimierungsproblem) und wurde ersatzlos entfernt. Für die Rechenzeit bei vielen kleinen Gleichungssystemen sorgt außerdem eine feste Ein-Thread-Vorgabe für OpenBLAS/OMP/MKL (per Messung ~20x schneller pro Lösung als die Standard-Multithreading-Einstellung, siehe `app.py`).
 
+## Verwandte Demos im Portfolio
+
+- [`mmc-queue-demo`](https://github.com/sebastian-hanisch/mmc-queue-demo): die **Erlang-C**-Formel für c Server mit gemeinsamer Warteschlange. Die hier zur Validierung genutzte Erlang-B-Formel beschreibt ein System ohne Warteplatz (ein Notruf, der keinen freien Wagen findet, geht verloren); Erlang C ist ihr Gegenstück, bei dem wartende Anfragen in der Schlange bleiben.
+- [`mm1-queue-demo`](https://github.com/sebastian-hanisch/mm1-queue-demo): der Fall mit einem Server (M/M/1), mit Formeln gegen Simulation und Little's Gesetz.
+
 ## Lokal ausführen
 
 ```bash
