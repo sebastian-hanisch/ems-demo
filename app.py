@@ -269,29 +269,27 @@ with st.expander("🧬 Metaheuristik-Vergleich: Genetischer Algorithmus vs. Ant-
     st.markdown(
         """
 Neben der lokalen Suche oben implementiert diese Demo zwei weitere Verfahren, die Blank
-(Dissertation, Kapitel 6) für dieselbe Aufgabenstellung explizit miteinander vergleicht: einen
+(Dissertation, Kapitel 6 und 7.1) für dieselbe Aufgabenstellung explizit miteinander vergleicht: einen
 **genetischen Algorithmus (GA)** und **Ant-Colony-Optimization (ACO)** - beide angewandt auf
 dieselbe HQM-Zielgröße wie die lokale Suche, aber ohne deren Startpunkt (naive Lösung) zu kennen.
-Blank kommt in eigenen Experimenten zu einem klaren Ergebnis (S. 168f. der Dissertation):
+Blank kommt in eigenen Experimenten zu einem klaren Ergebnis (Kapitel 7.1.2, S. 168f. der Dissertation):
 
 > *"the ACO performs better than the GA in the proposed experimental setting"* - die ACO reagiert
 > robuster auf die Parameterwahl und wird deshalb für den Rest der Arbeit als alleinige
 > Optimierungstechnik verwendet.
 
 Blank betont dabei selbst, dass ein GA-vs-ACO-Vergleich stark vom konkreten Anwendungsfall abhängt
-- und die breitere Literatur bestätigt das: IANNONI, MORABITO UND SAYDAM (2008) kombinieren das
-Hypercube-Modell umgekehrt mit einem GA (eine von Blanks eigenen Inspirationsquellen), und für
-andere EMS-Standort-/Einsatzmodelle (z.B. BENABDOUALLAH UND BOJJI zum "Dynamic Double Standard
-Model") schneidet in direkten Vergleichen gerade der **GA besser** ab als die ACO. Es gibt also
+- und die breitere Literatur deutet in dieselbe Richtung: IANNONI, MORABITO UND SAYDAM (2008) kombinieren das
+Hypercube-Modell umgekehrt mit einem GA (von Blank in seinem Literaturüberblick aufgeführt), und in einer
+Vergleichsstudie zur Ambulanz-Allokation (SCHJØLBERG ET AL., GECCO 2023, Oslo/Akershus; verglichen wurden GA,
+stochastische lokale Suche und ein memetischer Algorithmus) schnitt der **GA am besten** ab. Es gibt also
 keinen universellen Sieger - mit dem Button unten lässt sich das eigene Szenario direkt selbst
-nachvollziehen, inklusive Rechenzeit, denn genau die war neben der Lösungsgüte ausschlaggebend für
-Blanks Entscheidung.
+nachvollziehen, inklusive Rechenzeit (Blank wägt neben der Lösungsgüte auch die Rechenzeit ab, S. 169).
 
 Beide Verfahren sind hier zusätzlich **memetisch hybridisiert**: das jeweils beste Individuum
 bzw. die beste Ameise wird je Generation/Iteration mit ein paar Schritten lokaler Suche
-nachpoliert - eine Erweiterung, die weder Blank noch die oben genannten Vergleichsstudien
-verwenden, aber laut einer separaten Metaheuristik-Vergleichsstudie für Ambulanz-Allokation
-(GECCO 2023) reine populationsbasierte Verfahren übertrifft.
+nachpoliert - eine Erweiterung dieser Demo, die Blank nicht verwendet. Ob sie hilft, ist nicht garantiert
+(in der GECCO-2023-Studie lag der reine GA vor dem memetischen Algorithmus) und lässt sich über den Button am eigenen Szenario prüfen.
 """
     )
     run_comparison = st.button("🧬 Vergleich berechnen (bei vielen Fahrzeugen ca. 1-2 Sekunden)")
@@ -371,9 +369,9 @@ schrittweise durch Pheromon-Werte je Kandidat entstehen, die nach jeder Iteratio
 der Lösungsgüte verstärkt bzw. verdunstet werden. Beide sind unabhängig von der lokalen Suche
 und kennen deren Startpunkt nicht - beide sind aber **memetisch hybridisiert**: das jeweils
 beste Individuum bzw. die beste Ameise wird je Generation/Iteration mit ein paar Schritten
-lokaler Suche nachpoliert, bevor Selektion bzw. Pheromon-Update darauf aufbauen. Mehrere Studien
-(u.a. eine Metaheuristik-Vergleichsstudie für Ambulanz-Allokation, GECCO 2023) finden, dass
-diese Hybridisierung reine populationsbasierte Verfahren übertrifft.
+lokaler Suche nachpoliert, bevor Selektion bzw. Pheromon-Update darauf aufbauen. Das ist ein verbreiteter
+Ansatz, aber kein garantierter Gewinn: in der Ambulanz-Vergleichsstudie (SCHJØLBERG ET AL., GECCO 2023) war der
+reine GA das beste der verglichenen Verfahren.
 
 **Warum die naive Einschätzung mit der Auslastung immer schlechter wird:** Bei niedriger
 Auslastung ist fast immer ein Fahrzeug frei - das nächstgelegene antwortet meist, die naive

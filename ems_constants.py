@@ -23,7 +23,7 @@ MAX_SERVERS = 8
 
 LOCAL_SEARCH_MAX_ITER = 30
 
-# GA/ACO-Parameter: an Blank (Dissertation, Kapitel 6.3) angelehnt - dort
+# GA/ACO-Parameter: an Blank (Dissertation, Kapitel 7.1.2, S. 168f.) angelehnt - dort
 # identifiziert als die im eigenen Metaheuristik-Vergleich am besten
 # funktionierende ACO-Parameterkombination (Supd=6, Verdunstung 0,1,
 # Populationsgroesse 20). Fuer den GA verwendet diese Demo dieselbe
@@ -42,10 +42,9 @@ ACO_MAX_ITERATIONS = 30
 ACO_NO_IMPROVE_PATIENCE = 8
 
 # Memetische Hybridisierung (GA/ACO + kurze lokale Suche auf dem jeweils
-# besten Individuum/der besten Ameise je Generation/Iteration): mehrere
-# Studien (u.a. eine Metaheuristik-Vergleichsstudie fuer Ambulanz-Allokation,
-# GECCO 2023) finden, dass ein memetischer Algorithmus reinen GA/ACO-Varianten
-# ueberlegen ist. max_iter bewusst klein gehalten, da dieser Schritt in jeder
+# besten Individuum/der besten Ameise je Generation/Iteration): verbreiteter
+# Ansatz, aber kein garantierter Gewinn (in Schjoelberg et al., GECCO 2023, war
+# der reine GA das beste der verglichenen Verfahren). max_iter bewusst klein gehalten, da dieser Schritt in jeder
 # Generation/Iteration erneut ausgefuehrt wird.
 GA_MEMETIC_POLISH_STEPS = 3
 ACO_MEMETIC_POLISH_STEPS = 3

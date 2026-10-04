@@ -1,12 +1,12 @@
 """
-Zwei weitere Standortstrategien, die Blank (Dissertation, Kapitel 6) explizit
+Zwei weitere Standortstrategien, die Blank (Dissertation, Kapitel 6 und 7.1) explizit
 miteinander vergleicht: Genetischer Algorithmus (GA) und Ant-Colony-
 Optimization (ACO). Beide werden hier - wie dort - direkt auf dieselbe
 HQM-Zielgroesse angewandt wie die lokale Suche in ems_location.py
 (demand-gewichtete erwartete Distanz auf Basis der tatsaechlichen
 Zuteilungswahrscheinlichkeiten, siehe hqm_objective).
 
-Blank kommt in eigenen Experimenten zu einem klaren Ergebnis (S. 168f. der
+Blank kommt in eigenen Experimenten zu einem klaren Ergebnis (Kapitel 7.1.2, S. 168f. der
 Dissertation): "the ACO performs better than the GA in the proposed
 experimental setting" - die ACO reagiert deutlich robuster auf die
 Parameterwahl und wird deshalb fuer den Rest der Arbeit als alleinige
@@ -21,11 +21,10 @@ Repraesentation, die auch local_search verwendet.
 Beide Verfahren sind memetisch hybridisiert: das jeweils beste Individuum
 bzw. die beste Ameise wird je Generation/Iteration mit ein paar Schritten
 lokaler Suche (Wiederverwendung von local_search aus ems_location.py)
-nachpoliert, bevor Selektion bzw. Pheromon-Update darauf aufbauen. Mehrere
-Studien - u.a. eine Metaheuristik-Vergleichsstudie fuer Ambulanz-Allokation
-(GECCO 2023) sowie der allgemeine ACO-Literaturstrang "ACO + lokale Suche" -
-finden, dass diese Hybridisierung reine populationsbasierte Verfahren
-uebertrifft.
+nachpoliert, bevor Selektion bzw. Pheromon-Update darauf aufbauen. Das ist ein Ansatz, der aus dem allgemeinen ACO-Literaturstrang "ACO + lokale Suche"
+bekannt ist, aber kein garantierter Gewinn: in einer Ambulanz-Vergleichsstudie
+(Schjoelberg et al., GECCO 2023) war der reine GA das beste der verglichenen
+Verfahren.
 
 Beide Verfahren memoisieren HQM-Auswertungen ueber ein lokales cache-dict
 (Schluessel: sortiertes Tupel der Standort-Indizes), das auch an die
