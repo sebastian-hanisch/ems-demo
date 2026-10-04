@@ -136,13 +136,13 @@ with preset_col1:
     st.button(
         "🌙 Ruhige Nachtschicht", width="stretch",
         on_click=apply_preset, args=(4, 10, 12, 2, 0.5, 42, 0.5, 0.25, 4.0),
-        help="Niedrige Auslastung - naive und HQM-bewusste Standortwahl unterscheiden sich kaum.",
+        help="Niedrige Auslastung - ein Fahrzeug ist meist frei: die naive Selbsteinschätzung liegt nur etwa 16 % neben der realen Reaktionszeit.",
     )
 with preset_col2:
     st.button(
         "🔥 Stoßzeit", width="stretch",
         on_click=apply_preset, args=(4, 10, 12, 2, 0.5, 42, 0.5, 0.75, 4.0),
-        help="Hohe Auslastung - hier zeigt sich der Unterschied zwischen beiden Strategien deutlich.",
+        help="Hohe Auslastung - Fahrzeuge sind oft beschäftigt: die naive Selbsteinschätzung liegt etwa 45 % neben der realen Reaktionszeit.",
     )
 with preset_col3:
     st.button(
@@ -375,11 +375,14 @@ lokaler Suche nachpoliert, bevor Selektion bzw. Pheromon-Update darauf aufbauen.
 (u.a. eine Metaheuristik-Vergleichsstudie für Ambulanz-Allokation, GECCO 2023) finden, dass
 diese Hybridisierung reine populationsbasierte Verfahren übertrifft.
 
-**Warum der Unterschied mit der Auslastung wächst:** Bei niedriger Auslastung ist fast immer
-ein Fahrzeug frei - naive und HQM-bewusste Standortwahl fallen kaum unterschiedlich aus. Bei
-hoher Auslastung ist das nächstgelegene Fahrzeug häufiger beschäftigt, entferntere Fahrzeuge
-übernehmen spürbar mehr Einsätze als ein kongestionsblindes Modell annimmt - das lässt sich
-mit dem Auslastungs-Regler direkt nachvollziehen.
+**Warum die naive Einschätzung mit der Auslastung immer schlechter wird:** Bei niedriger
+Auslastung ist fast immer ein Fahrzeug frei - das nächstgelegene antwortet meist, die naive
+Selbsteinschätzung liegt nah an der Realität. Bei hoher Auslastung ist das nächstgelegene
+Fahrzeug häufiger beschäftigt, entferntere Fahrzeuge übernehmen spürbar mehr Einsätze als ein
+kongestionsblindes Modell annimmt - das lässt sich mit dem Auslastungs-Regler direkt
+nachvollziehen. Die HQM-bewusste Wahl ist dagegen schon bei niedriger Auslastung besser, weil
+sie die erwartete Entfernung selbst minimiert, die Greedy-MCLP-Wahl aber nur die Abdeckung
+innerhalb der Zeitschwelle; der Abstand in der Abdeckung wächst mit der Auslastung.
 
 **In echten Projekten** kämen meist weitere Aspekte dazu (mehrtägige Nachfrageszenarien,
 mehrere gewichtete Zielgrößen, Backup-Fahrzeugtypen, echte Straßennetze statt Luftlinie) -
@@ -467,6 +470,6 @@ st.caption(
 )
 st.caption(
     "Diese Demo ist Teil des Portfolios von [Sebastian Hanisch](https://sebastianhanisch.net) – "
-    "Operations Research und Machine Learning. Interesse an einer maßgeschneiderten Lösung für "
-    "Ihr Unternehmen? [Kontakt aufnehmen](https://sebastianhanisch.net/kontakt.html)"
+    "Operations Research und Machine Learning ([Über mich](https://sebastianhanisch.net/ueber-mich.html)). "
+    "Mehr zu den Demos: [Interaktive Demos](https://sebastianhanisch.net/demos.html)."
 )
